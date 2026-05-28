@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Exam Timetable Dashboard</title>
+    <title>Interactive Exam Timetable & Live Countdown</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -15,6 +15,8 @@
             --border: #e2e8f0;
             --accent: #0f766e;
             --accent-light: #ccfbf1;
+            --urgency-bg: #fef2f2;
+            --urgency-text: #991b1b;
         }
 
         * {
@@ -93,7 +95,6 @@
             margin-top: 4px;
         }
 
-        /* Controls / Search Bar Section */
         .controls-row {
             display: flex;
             gap: 16px;
@@ -141,7 +142,6 @@
             border-color: var(--primary);
         }
 
-        /* Timetable Cards/Rows Layout */
         .exam-list {
             display: flex;
             flex-direction: column;
@@ -170,7 +170,7 @@
             padding: 12px;
             border-radius: 10px;
             text-align: center;
-            min-width: 110px;
+            min-width: 120px;
             border-left: 4px solid var(--primary-light);
         }
 
@@ -204,6 +204,41 @@
             font-weight: 600;
             color: var(--text-dark);
             margin-top: 2px;
+        }
+
+        /* Interactive Countdown Badges */
+        .countdown-wrapper {
+            margin-top: 6px;
+        }
+
+        .countdown-tag {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+
+        .countdown-tag.urgent {
+            background-color: var(--urgency-bg);
+            color: var(--urgency-text);
+            animation: pulse 2s infinite;
+        }
+
+        .countdown-tag.passed {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            text-decoration: line-through;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
         }
 
         .time-info {
@@ -254,18 +289,6 @@
             min-width: 70px;
         }
 
-        /* Countdown specific styles */
-        .countdown-pill {
-            font-size: 11px;
-            font-weight: 600;
-            background: #f1f5f9;
-            color: #475569;
-            padding: 4px 8px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 6px;
-        }
-
         .no-results {
             text-align: center;
             padding: 40px;
@@ -299,42 +322,42 @@
     <header>
         <div class="header-top">
             <div>
-                <h1>June 2026 Examination Schedule</h1>
-                <div class="subtitle">Engineering & Academic Portal • Faculty Database Sync</div>
+                <h1>June 2026 Examination Portal</h1>
+                <div class="subtitle">Live Tracking, Schedule Synchronization & Countdown Engines</div>
             </div>
         </div>
         
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-label">Total Exams</div>
+                <div class="stat-label">Total Exams Scheduled</div>
                 <div class="stat-value" id="totalExamsCount">6 Courses</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Main Location</div>
-                <div class="stat-value" style="font-size: 15px; margin-top: 8px;">4th Floor South / Elect. Bldg</div>
+                <div class="stat-label">Next Exam In</div>
+                <div class="stat-value" id="globalCountdown" style="font-size: 16px; margin-top: 8px; color: #fca5a5;">Calculating...</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Schedule Window</div>
-                <div class="stat-value" style="font-size: 16px; margin-top: 8px;">June 3 - June 21, 2026</div>
+                <div class="stat-label">Main Venue</div>
+                <div class="stat-value" style="font-size: 15px; margin-top: 8px;">4th Floor South / Elect. Bldg</div>
             </div>
         </div>
     </header>
 
-    <!-- Search & Filters Container -->
+    <!-- Controls / Search / Filter Section -->
     <div class="controls-row">
         <div class="search-wrapper">
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by course code, name, building, or seat...">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by code, name, hall, or seat...">
         </div>
         <button class="filter-btn active" id="filterAll" onclick="filterExams('all')">All Exams</button>
-        <button class="filter-btn" id="filterMorning" onclick="filterExams('morning')">Morning (Before 12 PM)</button>
-        <button class="filter-btn" id="filterAfternoon" onclick="filterExams('afternoon')">Afternoon (12 PM onwards)</button>
+        <button class="filter-btn" id="filterMorning" onclick="filterExams('morning')">Morning Sessions</button>
+        <button class="filter-btn" id="filterAfternoon" onclick="filterExams('afternoon')">Afternoon Sessions</button>
     </div>
 
     <!-- Exam Container -->
     <div class="exam-list" id="examList">
         
         <!-- Exam Card 1 -->
-        <div class="exam-row" data-time-slot="morning" data-search="bus 342 entrepreneurship a3 p 7-b-a3 345 3 ssp">
+        <div class="exam-row" data-time-slot="morning" data-date="2026-06-03T09:00:00" data-search="bus 342 entrepreneurship a3 p 7-b-a3 345 3 ssp">
             <div class="date-badge">
                 <div class="date-day">03 June</div>
                 <div class="date-year">Wednesday, 2026</div>
@@ -342,7 +365,9 @@
             <div class="course-info">
                 <div class="course-code">BUS 342</div>
                 <div class="course-name">Entrepreneurship</div>
-                <div class="countdown-pill">June 2026</div>
+                <div class="countdown-wrapper">
+                    <span class="countdown-tag" id="timer-1">Loading...</span>
+                </div>
             </div>
             <div class="time-info">
                 <div class="info-label">Time Window</div>
@@ -359,7 +384,7 @@
         </div>
 
         <!-- Exam Card 2 -->
-        <div class="exam-row" data-time-slot="morning" data-search="eec 387 digital communications fourth floor south 5 1793 1">
+        <div class="exam-row" data-time-slot="morning" data-date="2026-06-09T11:30:00" data-search="eec 387 digital communications fourth floor south 5 1793 1">
             <div class="date-badge">
                 <div class="date-day">09 June</div>
                 <div class="date-year">Tuesday, 2026</div>
@@ -367,7 +392,9 @@
             <div class="course-info">
                 <div class="course-code">EEC 387</div>
                 <div class="course-name">Digital Communications</div>
-                <div class="countdown-pill">June 2026</div>
+                <div class="countdown-wrapper">
+                    <span class="countdown-tag" id="timer-2">Loading...</span>
+                </div>
             </div>
             <div class="time-info">
                 <div class="info-label">Time Window</div>
@@ -384,7 +411,7 @@
         </div>
 
         <!-- Exam Card 3 -->
-        <div class="exam-row" data-time-slot="afternoon" data-search="cse 327 software engineering fourth floor south 5 1778 1">
+        <div class="exam-row" data-time-slot="afternoon" data-date="2026-06-11T14:00:00" data-search="cse 327 software engineering fourth floor south 5 1778 1">
             <div class="date-badge">
                 <div class="date-day">11 June</div>
                 <div class="date-year">Thursday, 2026</div>
@@ -392,7 +419,9 @@
             <div class="course-info">
                 <div class="course-code">CSE 327</div>
                 <div class="course-name">Software Engineering</div>
-                <div class="countdown-pill">June 2026</div>
+                <div class="countdown-wrapper">
+                    <span class="countdown-tag" id="timer-3">Loading...</span>
+                </div>
             </div>
             <div class="time-info">
                 <div class="info-label">Time Window</div>
@@ -409,7 +438,7 @@
         </div>
 
         <!-- Exam Card 4 -->
-        <div class="exam-row" data-time-slot="morning" data-search="eec 346 embedded systems fourth floor south 5 1795 1">
+        <div class="exam-row" data-time-slot="morning" data-date="2026-06-14T11:30:00" data-search="eec 346 embedded systems fourth floor south 5 1795 1">
             <div class="date-badge">
                 <div class="date-day">14 June</div>
                 <div class="date-year">Sunday, 2026</div>
@@ -417,7 +446,9 @@
             <div class="course-info">
                 <div class="course-code">EEC 346</div>
                 <div class="course-name">Embedded Systems</div>
-                <div class="countdown-pill">June 2026</div>
+                <div class="countdown-wrapper">
+                    <span class="countdown-tag" id="timer-4">Loading...</span>
+                </div>
             </div>
             <div class="time-info">
                 <div class="info-label">Time Window</div>
@@ -434,7 +465,7 @@
         </div>
 
         <!-- Exam Card 5 -->
-        <div class="exam-row" data-time-slot="afternoon" data-search="cse 403 new trends in computer and communication engineering fourth floor south 5 1673 1">
+        <div class="exam-row" data-time-slot="afternoon" data-date="2026-06-17T14:00:00" data-search="cse 403 new trends in computer and communication engineering fourth floor south 5 1673 1">
             <div class="date-badge">
                 <div class="date-day">17 June</div>
                 <div class="date-year">Wednesday, 2026</div>
@@ -442,7 +473,9 @@
             <div class="course-info">
                 <div class="course-code">CSE 403</div>
                 <div class="course-name">New Trends in Computer & Comm. Eng.</div>
-                <div class="countdown-pill">June 2026</div>
+                <div class="countdown-wrapper">
+                    <span class="countdown-tag" id="timer-5">Loading...</span>
+                </div>
             </div>
             <div class="time-info">
                 <div class="info-label">Time Window</div>
@@ -459,7 +492,7 @@
         </div>
 
         <!-- Exam Card 6 -->
-        <div class="exam-row" data-time-slot="morning" data-search="cse 336 computer networks fourth floor south 5 1794 1">
+        <div class="exam-row" data-time-slot="morning" data-date="2026-06-21T11:30:00" data-search="cse 336 computer networks fourth floor south 5 1794 1">
             <div class="date-badge">
                 <div class="date-day">21 June</div>
                 <div class="date-year">Sunday, 2026</div>
@@ -467,7 +500,9 @@
             <div class="course-info">
                 <div class="course-code">CSE 336</div>
                 <div class="course-name">Computer Networks</div>
-                <div class="countdown-pill">June 2026</div>
+                <div class="countdown-wrapper">
+                    <span class="countdown-tag" id="timer-6">Loading...</span>
+                </div>
             </div>
             <div class="time-info">
                 <div class="info-label">Time Window</div>
@@ -496,6 +531,52 @@
     const examRows = document.querySelectorAll('.exam-row');
     const noResults = document.getElementById('noResults');
     const totalExamsCount = document.getElementById('totalExamsCount');
+    const globalCountdownEl = document.getElementById('globalCountdown');
+
+    // Live Countdown Logic
+    function updateCountdowns() {
+        const now = new Date();
+        let closestExamDiff = Infinity;
+        let closestExamStr = "No upcoming exams";
+
+        examRows.forEach((row, idx) => {
+            const examDateStr = row.getAttribute('data-date');
+            const examTarget = new Date(examDateStr);
+            const timerEl = document.getElementById(`timer-${idx + 1}`);
+            
+            const diff = examTarget - now;
+
+            if (diff > 0) {
+                // Exam is in the future
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                let displayStr = `⏳ ${days}d ${hours}h ${minutes}m left`;
+                timerEl.textContent = displayStr;
+                
+                // Add urgency styling if under 3 days
+                if (days < 3) {
+                    timerEl.className = "countdown-tag urgent";
+                } else {
+                    timerEl.className = "countdown-tag";
+                }
+
+                // Global tracker find
+                if (diff < closestExamDiff) {
+                    closestExamDiff = diff;
+                    closestExamStr = `⏳ ${days}d ${hours}h ${minutes}m`;
+                }
+            } else {
+                // Exam has passed or is currently ongoing
+                timerEl.textContent = "✅ Completed / Active";
+                timerEl.className = "countdown-tag passed";
+            }
+        });
+
+        globalCountdownEl.textContent = closestExamStr;
+    }
 
     // Search and Filter Logic Combined
     function updateVisibility() {
@@ -517,7 +598,6 @@
             }
         });
 
-        // Toggle No Results State
         if (visibleCount === 0) {
             noResults.style.display = 'block';
         } else {
@@ -527,11 +607,8 @@
         totalExamsCount.textContent = visibleCount + (visibleCount === 1 ? ' Course' : ' Courses');
     }
 
-    // Filter button clicked
     function filterExams(slot) {
         currentFilter = slot;
-        
-        // Toggle Active Button Styles
         document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         if (slot === 'all') document.getElementById('filterAll').classList.add('active');
         if (slot === 'morning') document.getElementById('filterMorning').classList.add('active');
@@ -540,8 +617,11 @@
         updateVisibility();
     }
 
-    // Attach search input listener
     searchInput.addEventListener('input', updateVisibility);
+
+    // Run loops
+    setInterval(updateCountdowns, 1000);
+    updateCountdowns();
 </script>
 
 </body>
