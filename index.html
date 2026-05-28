@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Exam Timetable Dashboard</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #0f766e;
+            --accent-light: #ccfbf1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            padding: 24px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            color: white;
+            padding: 24px 32px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            color: #93c5fd;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #93c5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* Controls / Search Bar Section */
+        .controls-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+            background-color: var(--bg-card);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .filter-btn {
+            padding: 12px 20px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dark);
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Timetable Cards/Rows Layout */
+        .exam-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .exam-row {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: transform 0.2s, box-shadow 0.2s;
+            gap: 20px;
+        }
+
+        .exam-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05);
+        }
+
+        .date-badge {
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 110px;
+            border-left: 4px solid var(--primary-light);
+        }
+
+        .date-day {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .date-year {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .course-info {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .course-code {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary-light);
+            letter-spacing: 0.05em;
+        }
+
+        .course-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-top: 2px;
+        }
+
+        .time-info {
+            flex: 1.2;
+            min-width: 150px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-top: 2px;
+        }
+
+        .location-info {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .arabic-text {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            unicode-bidi: embed;
+            color: var(--accent);
+            background-color: var(--accent-light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            display: inline-block;
+            margin-left: 4px;
+        }
+
+        .seat-badge {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            min-width: 70px;
+        }
+
+        /* Countdown specific styles */
+        .countdown-pill {
+            font-size: 11px;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 6px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            background-color: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        @media (max-width: 850px) {
+            .exam-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .date-badge {
+                width: 100%;
+                text-align: left;
+                border-left: 4px solid var(--primary-light);
+            }
+            .seat-badge {
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-top">
+            <div>
+                <h1>June 2026 Examination Schedule</h1>
+                <div class="subtitle">Engineering & Academic Portal • Faculty Database Sync</div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Exams</div>
+                <div class="stat-value" id="totalExamsCount">6 Courses</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Main Location</div>
+                <div class="stat-value" style="font-size: 15px; margin-top: 8px;">4th Floor South / Elect. Bldg</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Schedule Window</div>
+                <div class="stat-value" style="font-size: 16px; margin-top: 8px;">June 3 - June 21, 2026</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search & Filters Container -->
+    <div class="controls-row">
+        <div class="search-wrapper">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by course code, name, building, or seat...">
+        </div>
+        <button class="filter-btn active" id="filterAll" onclick="filterExams('all')">All Exams</button>
+        <button class="filter-btn" id="filterMorning" onclick="filterExams('morning')">Morning (Before 12 PM)</button>
+        <button class="filter-btn" id="filterAfternoon" onclick="filterExams('afternoon')">Afternoon (12 PM onwards)</button>
+    </div>
+
+    <!-- Exam Container -->
+    <div class="exam-list" id="examList">
+        
+        <!-- Exam Card 1 -->
+        <div class="exam-row" data-time-slot="morning" data-search="bus 342 entrepreneurship a3 p 7-b-a3 345 3 ssp">
+            <div class="date-badge">
+                <div class="date-day">03 June</div>
+                <div class="date-year">Wednesday, 2026</div>
+            </div>
+            <div class="course-info">
+                <div class="course-code">BUS 342</div>
+                <div class="course-name">Entrepreneurship</div>
+                <div class="countdown-pill">June 2026</div>
+            </div>
+            <div class="time-info">
+                <div class="info-label">Time Window</div>
+                <div class="info-value">09:00 AM - 10:00 AM</div>
+            </div>
+            <div class="location-info">
+                <div class="info-label">Committee & Hall</div>
+                <div class="info-value">(A3 P) 7-B-A3 <br> <span class="arabic-text">لجنة 3 SSP</span></div>
+            </div>
+            <div>
+                <div class="info-label" style="margin-bottom: 4px;">Assigned Seat</div>
+                <div class="seat-badge">345</div>
+            </div>
+        </div>
+
+        <!-- Exam Card 2 -->
+        <div class="exam-row" data-time-slot="morning" data-search="eec 387 digital communications fourth floor south 5 1793 1">
+            <div class="date-badge">
+                <div class="date-day">09 June</div>
+                <div class="date-year">Tuesday, 2026</div>
+            </div>
+            <div class="course-info">
+                <div class="course-code">EEC 387</div>
+                <div class="course-name">Digital Communications</div>
+                <div class="countdown-pill">June 2026</div>
+            </div>
+            <div class="time-info">
+                <div class="info-label">Time Window</div>
+                <div class="info-value">11:30 AM - 01:30 PM</div>
+            </div>
+            <div class="location-info">
+                <div class="info-label">Committee & Hall</div>
+                <div class="info-value">Fourth Floor South 5 <span class="arabic-text">صالة</span> <br> <span class="arabic-text">لجنة 1 ( مبني كهرباء)</span></div>
+            </div>
+            <div>
+                <div class="info-label" style="margin-bottom: 4px;">Assigned Seat</div>
+                <div class="seat-badge">1793</div>
+            </div>
+        </div>
+
+        <!-- Exam Card 3 -->
+        <div class="exam-row" data-time-slot="afternoon" data-search="cse 327 software engineering fourth floor south 5 1778 1">
+            <div class="date-badge">
+                <div class="date-day">11 June</div>
+                <div class="date-year">Thursday, 2026</div>
+            </div>
+            <div class="course-info">
+                <div class="course-code">CSE 327</div>
+                <div class="course-name">Software Engineering</div>
+                <div class="countdown-pill">June 2026</div>
+            </div>
+            <div class="time-info">
+                <div class="info-label">Time Window</div>
+                <div class="info-value">02:00 PM - 04:00 PM</div>
+            </div>
+            <div class="location-info">
+                <div class="info-label">Committee & Hall</div>
+                <div class="info-value">Fourth Floor South 5 <span class="arabic-text">صالة</span> <br> <span class="arabic-text">لجنة 1 ( مبني كهرباء)</span></div>
+            </div>
+            <div>
+                <div class="info-label" style="margin-bottom: 4px;">Assigned Seat</div>
+                <div class="seat-badge">1778</div>
+            </div>
+        </div>
+
+        <!-- Exam Card 4 -->
+        <div class="exam-row" data-time-slot="morning" data-search="eec 346 embedded systems fourth floor south 5 1795 1">
+            <div class="date-badge">
+                <div class="date-day">14 June</div>
+                <div class="date-year">Sunday, 2026</div>
+            </div>
+            <div class="course-info">
+                <div class="course-code">EEC 346</div>
+                <div class="course-name">Embedded Systems</div>
+                <div class="countdown-pill">June 2026</div>
+            </div>
+            <div class="time-info">
+                <div class="info-label">Time Window</div>
+                <div class="info-value">11:30 AM - 01:30 PM</div>
+            </div>
+            <div class="location-info">
+                <div class="info-label">Committee & Hall</div>
+                <div class="info-value">Fourth Floor South 5 <span class="arabic-text">صالة</span> <br> <span class="arabic-text">لجنة 1 ( مبني كهرباء)</span></div>
+            </div>
+            <div>
+                <div class="info-label" style="margin-bottom: 4px;">Assigned Seat</div>
+                <div class="seat-badge">1795</div>
+            </div>
+        </div>
+
+        <!-- Exam Card 5 -->
+        <div class="exam-row" data-time-slot="afternoon" data-search="cse 403 new trends in computer and communication engineering fourth floor south 5 1673 1">
+            <div class="date-badge">
+                <div class="date-day">17 June</div>
+                <div class="date-year">Wednesday, 2026</div>
+            </div>
+            <div class="course-info">
+                <div class="course-code">CSE 403</div>
+                <div class="course-name">New Trends in Computer & Comm. Eng.</div>
+                <div class="countdown-pill">June 2026</div>
+            </div>
+            <div class="time-info">
+                <div class="info-label">Time Window</div>
+                <div class="info-value">02:00 PM - 04:00 PM</div>
+            </div>
+            <div class="location-info">
+                <div class="info-label">Committee & Hall</div>
+                <div class="info-value">Fourth Floor South 5 <span class="arabic-text">صالة</span> <br> <span class="arabic-text">لجنة 1 ( مبني كهرباء)</span></div>
+            </div>
+            <div>
+                <div class="info-label" style="margin-bottom: 4px;">Assigned Seat</div>
+                <div class="seat-badge">1673</div>
+            </div>
+        </div>
+
+        <!-- Exam Card 6 -->
+        <div class="exam-row" data-time-slot="morning" data-search="cse 336 computer networks fourth floor south 5 1794 1">
+            <div class="date-badge">
+                <div class="date-day">21 June</div>
+                <div class="date-year">Sunday, 2026</div>
+            </div>
+            <div class="course-info">
+                <div class="course-code">CSE 336</div>
+                <div class="course-name">Computer Networks</div>
+                <div class="countdown-pill">June 2026</div>
+            </div>
+            <div class="time-info">
+                <div class="info-label">Time Window</div>
+                <div class="info-value">11:30 AM - 01:30 PM</div>
+            </div>
+            <div class="location-info">
+                <div class="info-label">Committee & Hall</div>
+                <div class="info-value">Fourth Floor South 5 <span class="arabic-text">صالة</span> <br> <span class="arabic-text">لجنة 1 ( مبني كهرباء)</span></div>
+            </div>
+            <div>
+                <div class="info-label" style="margin-bottom: 4px;">Assigned Seat</div>
+                <div class="seat-badge">1794</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="noResults" class="no-results">
+        No examinations found matching your criteria. Try adjusting your search term.
+    </div>
+</div>
+
+<script>
+    let currentFilter = 'all';
+    const searchInput = document.getElementById('searchInput');
+    const examRows = document.querySelectorAll('.exam-row');
+    const noResults = document.getElementById('noResults');
+    const totalExamsCount = document.getElementById('totalExamsCount');
+
+    // Search and Filter Logic Combined
+    function updateVisibility() {
+        const query = searchInput.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        examRows.forEach(row => {
+            const timeSlot = row.getAttribute('data-time-slot');
+            const searchData = row.getAttribute('data-search');
+            
+            const matchesSearch = searchData.includes(query);
+            const matchesFilter = (currentFilter === 'all') || (timeSlot === currentFilter);
+
+            if (matchesSearch && matchesFilter) {
+                row.style.display = 'flex';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Toggle No Results State
+        if (visibleCount === 0) {
+            noResults.style.display = 'block';
+        } else {
+            noResults.style.display = 'none';
+        }
+
+        totalExamsCount.textContent = visibleCount + (visibleCount === 1 ? ' Course' : ' Courses');
+    }
+
+    // Filter button clicked
+    function filterExams(slot) {
+        currentFilter = slot;
+        
+        // Toggle Active Button Styles
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        if (slot === 'all') document.getElementById('filterAll').classList.add('active');
+        if (slot === 'morning') document.getElementById('filterMorning').classList.add('active');
+        if (slot === 'afternoon') document.getElementById('filterAfternoon').classList.add('active');
+
+        updateVisibility();
+    }
+
+    // Attach search input listener
+    searchInput.addEventListener('input', updateVisibility);
+</script>
+
+</body>
+</html>
